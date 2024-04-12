@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application</title>
+</head>
+<body>
+    <h1>Job Application Form</h1>
+    <form id="jobForm">
+        <label for="position">Position:</label><br>
+        <input type="text" id="position" name="position"><br>
+        <label for="department">Department:</label><br>
+        <input type="text" id="department" name="department"><br>
+        <label for="min_experience">Minimum Experience:</label><br>
+        <input type="number" id="min_experience" name="min_experience"><br>
+        <label for="required_skills">Required Skills (comma separated):</label><br>
+        <input type="text" id="required_skills" name="required_skills"><br><br>
+
+        <h2>Candidates</h2>
+        <label for="num_candidates">Number of Candidates:</label><br>
+        <input type="number" id="num_candidates" name="num_candidates" min="1"><br><br>
+
+        <div id="candidates">
+        </div>
+
+        <button type="button" id="addCandidate">Add Candidate</button><br><br>
+        <button type="button" id="compareCandidates">Compare</button><br><br>
+
+        <div id="recommendedCandidate">
+        </div>
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+    let candidateIndex = 0;
+
+    function addCandidateForms(numCandidates) {
+        const candidatesDiv = document.getElementById('candidates');
+        candidatesDiv.innerHTML = ''; // Очищаем предыдущие формы
+
+        for (let i = 0; i < numCandidates; i++) {
+            const candidateNameInput = document.createElement('input');
+            candidateNameInput.type = 'text';
+            candidateNameInput.id = `candidate_name_${i}`;
+            candidateNameInput.name = `candidate_name_${i}`;
+            candidateNameInput.placeholder = 'Candidate Name';
+
+            const candidateAgeInput = document.createElement('input');
+            candidateAgeInput.type = 'number';
+            candidateAgeInput.id = `candidate_age_${i}`;
+            candidateAgeInput.name = `candidate_age_${i}`;
+            candidateAgeInput.placeholder = 'Candidate Age';
+
+            const candidateExperienceInput = document.createElement('input');
+            candidateExperienceInput.type = 'number';
+            candidateExperienceInput.id = `candidate_experience_${i}`;
+            candidateExperienceInput.name = `candidate_experience_${i}`;
+            candidateExperienceInput.placeholder = 'Candidate Experience';
+
+            const candidateSkillsInput = document.createElement('input');
+            candidateSkillsInput.type = 'text';
+            candidateSkillsInput.id = `candidate_skills_${i}`;
+            candidateSkillsInput.name = `candidate_skills_${i}`;
+            candidateSkillsInput.placeholder = 'Candidate Skills (comma separated)';
+
+            const br = document.createElement('br');
+
+            candidatesDiv.appendChild(candidateNameInput);
+            candidatesDiv.appendChild(br.cloneNode());
+            candidatesDiv.appendChild(candidateAgeInput);
+            candidatesDiv.appendChild(br.cloneNode());
+            candidatesDiv.appendChild(candidateExperienceInput);
+            candidatesDiv.appendChild(br.cloneNode());
+            candidatesDiv.appendChild(candidateSkillsInput);
+            candidatesDiv.appendChild(br.cloneNode());
+            candidatesDiv.appendChild(br.cloneNode());
+        }
+    }
+
+    document.getElementById('num_candidates').addEventListener('change', function() {
+        const numCandidates = parseInt(this.value, 10);
+        addCandidateForms(numCandidates);
+    });
+
+    document.getElementById('compareCandidates').addEventListener('click', function() {
+        var jobData = {
+            position: document.getElementById('position').value,
+            department: document.getElementById('department').value,
+            min_experience: parseFloat(document.getElementById('min_experience').value),
+            required_skills: document.getElementById('required_skills').value.split(',').map(skill => skill.trim()),
+        };
+
+        var candidatesData = [];
+        var numCandidates = document.getElementById('num_candidates').value;
+        for (var i = 0; i < numCandidates; i++) {
+            var candidateData = {
+                name: document.getElementById(`candidate_name_${i}`).value,
+                age: parseInt(document.getElementById(`candidate_age_${i}`).value),
+                experience: parseFloat(document.getElementById(`candidate_experience_${i}`).value),
+                skills: document.getElementById(`candidate_skills_${i}`).value.split(',').map(skill => skill.trim()),
+            };
+            candidatesData.push(candidateData);
+        }
+
+        axios.post('/compare_candidates/', { job: jobData, candidates: candidatesData })
+            .then(function (response) {
+                // Обработка успешного ответа сервера
+                console.log(response.data);
+                // Вы можете обновить информацию о рекомендованном кандидате на странице
+                document.getElementById('recommendedCandidate').textContent = JSON.stringify(response.data, null, 2);
+            })
+            .catch(function (error) {
+                // Обработка ошибки
+                console.error(error);
+            });
+    });
+    </script>
+</body>
+</html>
